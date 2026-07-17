@@ -42,6 +42,16 @@ full-screen gift-card takeover at the end.
 
 ## How we built it (deep Zero.xyz usage — this is a Zero showcase)
 
+**The brain is Claude itself.** `ladder_agent.py` runs the Claude Agent SDK
+and hands the model exactly five tools — `market_search`, `market_inspect`,
+`market_buy`, `market_review`, `narrate` — and nothing else. Every decision,
+every vendor comparison, and every thought on the dashboard is live LLM
+reasoning, not a script (in one rehearsal it invented a "Royal Pets" portrait
+pack and priced it at $6.99 — we take no credit). The money rules live in
+`market_buy()` as Python code the model cannot override: **the AI decides,
+the code guards.** A deterministic Node.js understudy (`agent/run.js`, same
+guards, same event feed) stands by as the stage fallback.
+
 The agent's entire economic life runs through the Zero CLI verb loop:
 
 1. `zero auth login` — device-flow auth to a managed wallet we funded with
@@ -139,11 +149,16 @@ argv construction (`buildFetchArgs()`) is unit-testable without spending.
 
 ## Honesty footnote
 
-Dry mode (the default, used for rehearsal and as the stage-safe path) replays
-fixtures captured from real Zero reconnaissance; it spends nothing and calls
-nothing. LIVE mode executes the real `zero` verb loop under the guards above,
-with the gift-card purchase as the finale. Every service, price, slug, and
-the 22-service search result cited here is real observed data, not invention.
+The demo runs in rehearsal mode — by choice. The wallet is real and funded
+(5.00 USDC, verifiable, sealed for the whole hackathon); the market data is
+a replay of real Zero reconnaissance; **the thinking is live** — Claude
+reasons through every run fresh, and no two runs come out the same. LIVE mode
+exists behind a one-boolean switch and executes the real `zero` verb loop
+under the same guards, with the gift-card purchase as the finale. Every
+service, price, slug, and the 22-service search result cited here is real
+observed data, not invention. We think an honest demo with a sealed wallet
+beats burning the budget for theater — the engineering is the flex.
 
-**Built with:** Node.js 20 (stdlib only), Zero.xyz CLI (search / get /
-fetch / review), x402, USDC on Base.
+**Built with:** Python 3.12 + Claude Agent SDK (the brain), Node.js 20
+stdlib (dashboard + understudy agent), Zero.xyz CLI (search / get / fetch /
+review), x402, USDC on Base.

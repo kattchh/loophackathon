@@ -35,32 +35,39 @@ Seven rungs, rendered live on the dashboard as the agent climbs:
 ## Architecture
 
 ```
-            ┌───────────────────────────────┐
-            │   AGENT LOOP    agent/run.js  │
-            │   PLAN → ACT → BUILD → SELL → │
-            │   OBSERVE → CORRECT → FINALE  │
-            └──────────────┬────────────────┘
-                           │ guarded spend
-            ┌──────────────▼────────────────┐
-            │  ZERO CLI WRAPPER agent/zero.js│      x402 (HTTP 402 +
-            │  search → get → fetch → review │      USDC on Base)
-            │  budget caps · reserve · caps  ├────────────────────────►
-            │  per-call --max-pay            │   thousands of machine-
-            └──────────────┬────────────────┘   payable services: data,
-                           │ appends            image gen, hosting, gift
-            ┌──────────────▼────────────────┐   cards, even human labor
-            │         events.jsonl          │
-            │   (the only interface between │
-            │      agent and dashboard)     │
-            └──────────────▲────────────────┘
-                           │ polled every 400ms via /events
-            ┌──────────────┴────────────────┐
-            │  DASHBOARD  localhost:4200    │
-            │  dashboard/server.js + index  │
-            │  giant balance · thought feed │
-            │  purchase ledger · rung rail  │
-            │  full-screen gift-card finale │
-            └───────────────────────────────┘
+   ┌───────────────────────────────────────────────────────────┐
+   │  PRIMARY BRAIN — ladder_agent.py (Python)                 │
+   │  Claude itself, via the Claude Agent SDK, reasoning LIVE. │
+   │  It gets exactly 5 tools: market_search · market_inspect  │
+   │  · market_buy · market_review · narrate — and nothing else│
+   │                                                           │
+   │  The AI decides. The code guards: budget cap, finale-only │
+   │  reserve, per-call caps live in market_buy(), not in the  │
+   │  model's judgment.                                        │
+   └──────────────┬────────────────────────────────────────────┘
+                  │                    ┌──────────────────────────────┐
+                  │ guarded spend      │ UNDERSTUDY — agent/run.js    │
+                  │                    │ deterministic clockwork arc, │
+                  │              ◄─────┤ same guards (agent/zero.js), │
+                  │   same event feed  │ stage fallback in 90 seconds │
+                  │                    └──────────────────────────────┘
+   ┌──────────────▼────────────────┐
+   │  ZERO CLI  search → get →     │      x402 (HTTP 402 + USDC on Base)
+   │  fetch --max-pay → review     ├────────────────────────────────────►
+   └──────────────┬────────────────┘   thousands of machine-payable
+                  │ appends            services: data, image gen, hosting,
+   ┌──────────────▼────────────────┐   gift cards, even human labor
+   │         events.jsonl          │
+   │   (the only interface between │
+   │      agents and dashboard)    │
+   └──────────────▲────────────────┘
+                  │ polled every 400ms via /events
+   ┌──────────────┴────────────────┐
+   │  DASHBOARD  localhost:4200    │
+   │  giant balance · thought feed │
+   │  purchase ledger · rung rail  │
+   │  full-screen gift-card finale │
+   └───────────────────────────────┘
 ```
 
 Zero external dependencies. Node 20 stdlib only. No `npm install`, no CDNs,
@@ -68,18 +75,24 @@ no build step — venue wifi cannot hurt us.
 
 ## How to run
 
-Requirements: Node 20+. That's it.
-
 ```bash
 # terminal 1 — the demo screen (http://localhost:4200)
-node dashboard/server.js
+node dashboard/server.js          # Node 20+, zero dependencies
 
-# terminal 2 — the agent (DRY mode, the default: spends nothing)
+# terminal 2 — THE BRAIN (Claude Agent SDK; rehearsal mode: spends nothing)
+python3 -m venv .venv && ./.venv/bin/pip install claude-agent-sdk
+npm i -g @anthropic-ai/claude-code   # the SDK's engine; sign in once with `claude`
+./.venv/bin/python ladder_agent.py
+
+# understudy — deterministic 90-second arc, no SDK needed (stage fallback)
 node agent/run.js
 ```
 
-Open http://localhost:4200 and watch the full story arc play out in about
-90 seconds: all 7 rungs, ending in the gift-card finale.
+Open http://localhost:4200 and watch the climb: all 7 rungs, ending in the
+gift-card finale. Every brain run is different — the thoughts on screen are
+Claude actually reasoning about vendors, prices, and strategy in real time
+(in one rehearsal it named its product "Royal Pets" and priced it at $6.99;
+we take no credit).
 
 ### LIVE mode (real money, heavily guarded)
 
@@ -125,6 +138,13 @@ committed.
 - The guard-rail code. Budget cap, finale reserve, and per-call `--max-pay`
   are enforced in `agent/zero.js` in both modes.
 
+**Also real: the thinking.** In the primary brain, every decision and every
+on-screen thought is Claude reasoning live via the Agent SDK — in rehearsal
+mode too. Rehearsal replays the *market* (from our real recon); it never
+scripts the *mind*. We chose to run the hackathon demo in rehearsal mode and
+keep the $5.00 sealed — the wallet is real, funded, and verifiably intact,
+and we'd rather show honest engineering than burn the budget for theater.
+
 **Simulated in DRY mode (the default):**
 
 - Every Zero call is replayed from fixtures captured during that real
@@ -145,7 +165,8 @@ of the ladder is the extrapolation, clearly labeled.
 ## Repo layout
 
 ```
-agent/run.js         the agent loop (Builder A)
+ladder_agent.py      THE BRAIN — Claude Agent SDK, 5 guarded tools (read this one)
+agent/run.js         understudy: deterministic clockwork arc (Builder A)
 agent/zero.js        Zero CLI wrapper + money guards (Builder A)
 agent/fixtures.js    canned dry-run data from real recon (Builder A)
 dashboard/server.js  serves dashboard + /events (Builder B)
@@ -153,3 +174,7 @@ dashboard/index.html the demo screen (Builder B)
 events.jsonl         runtime artifact — the agent/dashboard interface
 README.md · DEMO_SCRIPT.md · DEVPOST.md   docs (Builder C)
 ```
+
+Built in an afternoon by one human (product/GTM, non-technical) directing a
+team of AI builders — which is itself the thesis: agents doing real economic
+work under human intent and hard-coded guardrails.

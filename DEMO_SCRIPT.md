@@ -1,8 +1,9 @@
 # LADDER — 3:00 Stage Script
 
-**Presenter:** Katerina. **Run length:** the dry arc completes in ~90 seconds;
-you talk for 180. The dashboard will sometimes be ahead of you or behind you
-by ±15 seconds — that is fine, the script survives. Talk to the ledger, never
+**Presenter:** Katerina. **Run length:** the brain arc runs ~2½–3 minutes and
+every run is genuinely different — the thoughts are Claude reasoning live, so
+anchor each beat on what APPEARS (a rung lighting, a purchase landing), not on
+the clock. The script survives ±20 seconds of drift. Talk to the ledger, never
 to the spinner.
 
 **The two money moments to milk:** (1) the balance visibly dropping on the
@@ -14,13 +15,16 @@ full beat before speaking.
 
 - Dashboard fullscreen at http://localhost:4200, projector-dark room if we can get it.
 - Fresh `events.jsonl` (delete it) so the screen opens clean: $5.00, ladder dark.
-- Tech partner (Builder A) has `node agent/run.js` typed and ready — fires on your cue at ~0:20.
+- Tech side has `./.venv/bin/python ladder_agent.py` typed and ready — fires on
+  your cue at ~0:20. (Panic fallback: `node agent/run.js` — deterministic, 90s.)
+- ONLY the dashboard on screen while recording — no email, no messages, no tabs.
 - Phone timer in your pocket on vibrate at 2:30.
 - One rule: **never apologize to the screen.** If anything stalls, use the 15-second fallback below.
 
-**Mode call-out:** the primary lines below are written for the DRY replay and
-are honest for it. Lines marked **[IF LIVE]** are upgrades to swap in only if
-we run `LIVE=1` on stage.
+**What's true (say it with your chest):** the brain is Claude reasoning live —
+nothing on the left side of the screen is scripted. The market it shops is a
+replay of our real reconnaissance (real services, real prices, real $5 wallet,
+sealed on purpose). Every run comes out different.
 
 ---
 
@@ -37,14 +41,14 @@ we run `LIVE=1` on stage.
 ### 0:20 — PLAN · *(cue the run: nod to tech partner)*
 **On screen:** Phase badge flips to PLAN. Thought feed starts typing. Rung 1 lights: *wallet live*.
 **Say:**
-> "This is LADDER. Left side: its actual thoughts. Right side: its receipts.
-> That number at the top is a real wallet — five real dollars in USDC,
-> managed by Zero dot xyz. Everything you're about to see it find, and every
-> price, is real — we scouted this market with this wallet. This run is the
-> replay of that story, because stage wifi is where demos go to die."
->
-> **[IF LIVE]** swap the last sentence for: "And this is happening live,
-> right now, with real money. Pray for us."
+> "This is LADDER. Left side: its actual thoughts — that's Claude reasoning
+> live, right now; we genuinely don't know what it'll name its product.
+> Right side: its receipts. The number at the top is a real wallet — five
+> real dollars in USDC, managed by Zero dot xyz, sitting sealed on this
+> laptop. Every service and every price it's about to shop is real — we
+> scouted this market with this wallet this morning. The purchases replay
+> that scouting, because stage wifi is where demos go to die. The mind
+> doesn't replay. Watch it think."
 
 ### 0:40 — ACT, part 1: the plot twist
 **On screen:** Search event: `"gift card" → 22 services`. Inspect events with prices. Rung 2: *market scouted*.
@@ -97,14 +101,12 @@ we run `LIVE=1` on stage.
 > Amazon gift card — bought by software, with software money, from a vending
 > machine built for machines."
 >
-> "The code's masked because in a live run that's a real, spendable code —
-> and this room types fast."
->
-> **[IF LIVE]** "That code is real and live *right now*, which is exactly why
-> it's masked — I've seen how fast you all type."
+> "The code's masked out of habit — in a live-money run that's a real,
+> spendable code, and this room types fast."
 >
 > "One more detail: this hackathon's prize… is an Amazon gift card. Our agent
-> spent the afternoon buying its own trophy. We'd like to make that a habit."
+> spent the afternoon learning to buy its own trophy. We'd like to make that
+> a habit."
 
 ### 2:35 — CLOSE: the ladder
 **On screen:** Dashboard resting state: full lit ladder 📎→🏠, final balance, complete ledger.
@@ -128,10 +130,10 @@ point at the ledger of completed purchases, and keep talking:
 > data, image generation, hosting, bought machine-to-machine for about a
 > penny total. The agent's thinking. For five dollars, it's allowed to."
 
-That line buys 15 seconds. Behind you, Builder A silently restarts the run —
-it replays in 90 seconds, which is faster than explaining a spinner. If we're
-past 2:30 when it dies, skip straight to the CLOSE — the ladder line works
-over a frozen ledger, and the ledger is real.
+That line buys 15 seconds. Behind you, the tech side silently launches the
+understudy — `node agent/run.js` replays the full arc in 90 seconds, faster
+than explaining a spinner. If we're past 2:30 when it dies, skip straight to
+the CLOSE — the ladder line works over a frozen ledger, and the ledger is real.
 
 ## Timing cheat card (tape to the podium)
 

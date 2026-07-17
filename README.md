@@ -173,6 +173,8 @@ dashboard/server.js  serves dashboard + /events (Builder B)
 dashboard/index.html the demo screen (Builder B)
 events.jsonl         runtime artifact — the agent/dashboard interface
 README.md · DEMO_SCRIPT.md · DEVPOST.md   docs (Builder C)
+docs/                process artifacts: the original battle plan (PLAN.md)
+                     and the spec the AI build team worked under (CONTRACT.md)
 ```
 
 Built in an afternoon by one human (product/GTM, non-technical) directing a

@@ -57,6 +57,31 @@ function replaySlice(events) {
     .map(e => ({ ...e, ts: cycleStart + (e.ts - first) }));
 }
 
+// POST /ingest — a producer (shop/buyer/brain on another host) posts one event;
+// we append it to EVENTS_PATH so the dashboard renders a fully distributed run.
+// Optional INGEST_TOKEN gates it. Enables deploying the pieces on separate boxes.
+const INGEST_TOKEN = process.env.INGEST_TOKEN || '';
+function ingestEvent(req, res) {
+  if (INGEST_TOKEN && req.headers['x-ingest-token'] !== INGEST_TOKEN) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end('{"ok":false,"error":"forbidden"}');
+    return;
+  }
+  let body = '';
+  req.on('data', (c) => { body += c; if (body.length > 1e6) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const evt = JSON.parse(body);
+      fs.appendFile(EVENTS_PATH, JSON.stringify(evt) + '\n', () => {});
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+    } catch (_e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end('{"ok":false,"error":"bad json"}');
+    }
+  });
+}
+
 function serveEvents(res) {
   fs.readFile(EVENTS_PATH, 'utf8', (err, text) => {
     let events = [];
@@ -89,6 +114,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === 'GET' && url === '/events') {
     serveEvents(res);
+    return;
+  }
+  if (req.method === 'POST' && url === '/ingest') {
+    ingestEvent(req, res);
     return;
   }
   if (req.method === 'GET' && url === '/favicon.ico') {

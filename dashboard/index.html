@@ -230,7 +230,7 @@
   /* ---------------- windows ---------------- */
   #cols {
     display: grid;
-    grid-template-columns: 1.32fr 1fr;
+    grid-template-columns: 1.2fr 0.9fr 0.9fr;
     gap: clamp(12px, 1.6vw, 26px);
     min-height: 0;
   }
@@ -388,6 +388,31 @@
     letter-spacing: 0.14em;
   }
   #totalSpent { color: var(--acc); text-shadow: 0 0 8px var(--acc-glow); }
+
+  /* earn ledger (real x402 income) — mirrors #ledger */
+  #earnScroll { padding: 0 clamp(12px, 1.2vw, 20px); }
+  #earnLedger { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  #earnLedger th {
+    position: sticky; top: 0; background: var(--panel); color: var(--dimmer);
+    font-family: var(--px); font-size: clamp(8px, 1.2vh, 11px); letter-spacing: 0.08em;
+    font-weight: 400; text-align: left; padding: clamp(7px, 1.2vh, 11px) 4px;
+    border-bottom: 2px solid var(--line);
+  }
+  #earnLedger td {
+    padding: clamp(6px, 1.2vh, 11px) 4px; border-bottom: 2px dotted var(--line-soft);
+    font-size: clamp(14px, 2.2vh, 20px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #earnLedger tr { animation: slideIn 0.28s steps(4); }
+  #earnLedger .c-time  { width: clamp(56px, 5.2vw, 76px); color: var(--dimmer); font-size: clamp(12px, 1.8vh, 15px); }
+  #earnLedger .c-price { width: clamp(74px, 6.6vw, 104px); text-align: right; color: var(--acc); text-shadow: 0 0 8px var(--acc-glow); }
+  #earnLedger .c-ok    { width: 32px; text-align: center; }
+  #earnLedger td.c-ok.ok { color: var(--acc); text-shadow: 0 0 8px var(--acc-glow); }
+  #earnLedger td.c-item  { color: var(--dim); }
+  #earnLedger .earn-box { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  #earnLedger .earn-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  #earnLedger .txlink { flex: none; color: var(--acc); text-decoration: none; font-size: clamp(11px, 1.6vh, 14px); opacity: 0.85; }
+  #earnLedger .txlink:hover { text-decoration: underline; opacity: 1; }
+  #totalEarned { color: var(--acc); text-shadow: 0 0 8px var(--acc-glow); }
 
   .emptyNote {
     padding: clamp(12px, 2.2vh, 22px) clamp(12px, 1.2vw, 20px);
@@ -917,6 +942,25 @@
       </div>
       <footer><span>TOTAL SPENT</span><span id="totalSpent">$0.0000</span></footer>
     </section>
+
+    <section class="win">
+      <div class="titlebar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">SHOP.x402</span>
+        <span class="tbdb">&#9704; &#9630; &#9677;</span>
+        <span class="meta"><b id="saleCount">0 SOLD</b></span>
+      </div>
+      <div id="earnEmpty" class="emptyNote">shop open · awaiting a buyer</div>
+      <div id="earnScroll" class="scroll">
+        <table id="earnLedger">
+          <thead>
+            <tr><th class="c-time">TIME</th><th class="c-item">SALE</th><th class="c-price">USDC IN</th><th class="c-ok"></th></tr>
+          </thead>
+          <tbody id="earnBody"></tbody>
+        </table>
+      </div>
+      <footer><span>TOTAL EARNED</span><span id="totalEarned">$0.0000</span></footer>
+    </section>
   </main>
 
   <footer id="railWrap">
@@ -981,6 +1025,8 @@
   const feed = $('feed'), feedEmpty = $('feedEmpty');
   const ledgerBody = $('ledgerBody'), ledgerEmpty = $('ledgerEmpty');
   const totalSpentEl = $('totalSpent'), txCountEl = $('txCount');
+  const earnBody = $('earnBody'), earnEmpty = $('earnEmpty');
+  const totalEarnedEl = $('totalEarned'), saleCountEl = $('saleCount');
   const balWrap = $('balWrap'), balMain = $('balMain'), balSub = $('balSub'), deltaEl = $('delta');
   const phaseNameEl = $('phaseName'), badge = $('badge');
   const railFill = $('railFill');
@@ -997,6 +1043,7 @@
   let seen = 0;              // events already rendered (index into /events array)
   let balShown = 5, balTarget = 5, balAnimId = null;
   let totalSpent = 0, txCount = 0;
+  let totalEarned = 0, saleCount = 0;
   let maxRung = 0, latestRung = 0;
   let lastPhase = '';
   let typeTimer = null, typeEl = null, typeFull = '';
@@ -1172,6 +1219,38 @@
     }
   }
 
+  // ---------- earn ledger (real x402 income) ----------
+  function earnAdd(ts, label, amount, txUrl) {
+    const tr = document.createElement('tr');
+    const mk = (cls, txt) => { const td = document.createElement('td'); td.className = cls; td.textContent = txt; return td; };
+    tr.appendChild(mk('c-time', fmtTime(ts)));
+    const tdItem = mk('c-item', '');
+    const box = document.createElement('div');
+    box.className = 'earn-box';
+    const nm = document.createElement('span');
+    nm.className = 'earn-name';
+    nm.textContent = String(label !== undefined && label !== null ? label : 'sale');
+    box.appendChild(nm);
+    if (txUrl) {
+      const a = document.createElement('a');
+      a.className = 'txlink'; a.href = txUrl; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'tx ↗';
+      box.appendChild(a);
+    }
+    tdItem.appendChild(box);
+    tr.appendChild(tdItem);
+    tr.appendChild(mk('c-price', (typeof amount === 'number' && isFinite(amount)) ? '+' + fmtUsd(amount) : '—'));
+    tr.appendChild(mk('c-ok ok', '✓'));
+    earnBody.prepend(tr);
+    while (earnBody.children.length > 40) earnBody.lastChild.remove();
+    earnEmpty.style.display = 'none';
+    saleCount += 1;
+    saleCountEl.textContent = saleCount + ' SOLD';
+    if (typeof amount === 'number' && isFinite(amount)) {
+      totalEarned += amount;
+      totalEarnedEl.textContent = fmtUsd4(totalEarned);
+    }
+  }
+
   // ---------- ladder rail ----------
   function setRung(n) {
     if (typeof n !== 'number' || n < 1 || n > 7) return;
@@ -1274,6 +1353,26 @@
       case 'finale':
         showFinale(ev);
         break;
+      case 'listing':
+        addSys(ts, '🏪 ' + (ev.note === 'repriced' || ev.note === 'auto-decay' ? 'repriced' : 'listed')
+          + ' · ' + (ev.product !== undefined ? ev.product : 'product')
+          + (typeof ev.priceUsd === 'number' ? ' @ ' + fmtUsd(ev.priceUsd) : ''));
+        break;
+      case 'offer':
+        addSys(ts, '🤖 buyer ' + (ev.decision === 'skip' ? 'holds off' : 'sizing up')
+          + ' · asking ' + fmtUsd(ev.priceUsd) + ' vs willing ' + fmtUsd(ev.willingnessUsd)
+          + (ev.model && ev.model !== 'rule' ? ' · ' + ev.model : ''));
+        break;
+      case 'sale':
+        earnAdd(ts, ev.product !== undefined ? ev.product : 'sale', ev.amountUsd, ev.explorerUrl || null);
+        addSys(ts, '💰 SALE · +' + fmtUsd(ev.amountUsd) + ' USDC' + (ev.txHash ? ' · settled on-chain' : ''), 'rungline');
+        break;
+      case 'earnings':
+        if (typeof ev.totalUsd === 'number' && ev.totalUsd > totalEarned) {
+          totalEarned = ev.totalUsd;
+          totalEarnedEl.textContent = fmtUsd4(totalEarned);
+        }
+        break;
       default:
         break; // unknown event types are ignored, never fatal
     }
@@ -1289,6 +1388,11 @@
     totalSpent = 0; txCount = 0;
     totalSpentEl.textContent = '$0.0000';
     txCountEl.textContent = '0 TX';
+    earnBody.innerHTML = '';
+    earnEmpty.style.display = '';
+    totalEarned = 0; saleCount = 0;
+    totalEarnedEl.textContent = '$0.0000';
+    saleCountEl.textContent = '0 SOLD';
     balShown = 5; balTarget = 5;
     balHist.length = 0; balHist.push(5); renderBalChart(balHist);
     cancelAnimationFrame(balAnimId);

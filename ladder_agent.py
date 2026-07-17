@@ -28,7 +28,9 @@ import asyncio
 import json
 import os
 import subprocess
+import threading
 import time
+import urllib.request
 from pathlib import Path
 
 from claude_agent_sdk import (
@@ -57,12 +59,33 @@ STATE = {"phase": "PLAN", "spent": 0.0, "wallet": WALLET_START_USD, "buys": 0}
 
 # ---------------------------------------------------------------- event stream
 
+# Optional: stream every event into a Nexla data pipeline (webhook source).
+# Set NEXLA_WEBHOOK_URL to activate; without it this is completely dormant.
+# Fire-and-forget on a daemon thread — a slow pipeline can never stall the show.
+NEXLA_WEBHOOK_URL = os.environ.get("NEXLA_WEBHOOK_URL", "").strip()
+
+
+def _nexla_ship(event: dict) -> None:
+    try:
+        req = urllib.request.Request(
+            NEXLA_WEBHOOK_URL,
+            data=json.dumps(event).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=3)
+    except Exception:
+        pass  # telemetry is best-effort by design
+
+
 def emit(event: dict) -> None:
     """Append one event to events.jsonl — the dashboard tails this file."""
     event = {"ts": int(time.time() * 1000), **event}
     with EVENTS_PATH.open("a") as f:
         f.write(json.dumps(event) + "\n")
     print(json.dumps(event), flush=True)
+    if NEXLA_WEBHOOK_URL:
+        threading.Thread(target=_nexla_ship, args=(event,), daemon=True).start()
 
 
 def emit_balance() -> None:

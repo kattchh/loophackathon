@@ -20,6 +20,14 @@ spend fractions of cents on inputs, create value, and find a card with a
 flexible denomination (Bitrefill sells variable-amount cards) that fits
 whatever balance it earns its way to. Nobody wrote that arc. The market did.
 
+## Sponsor stack — three tools, three visibly different jobs
+
+| Sponsor | Role | Proof |
+|---|---|---|
+| **Zero.xyz** | The agent's **hands** — discovers, inspects, pays, and reviews x402 services (`search → get → fetch → review`), $5 wallet claimed via device-flow CLI auth | CLI installed + `zero init`; 5.00 USDC claimed; run ledger |
+| **Nexla** | The agent's **books** — every thought and purchase streams from `ladder_agent.py` into a webhook source created with `nexla-cli` (dry-run-validated), schema auto-detected into a nexset | source `125742` → flow `634457` → nexset `435614`; `nexla-cli skill install` on the build agent |
+| **Akash** | The agent's **public mission control** — the dashboard, containerized (`node:20-alpine`) and self-hosted on the decentralized cloud, perpetually replaying a real recorded run | SDL at `deploy/akash-deploy.yaml`; public deployment URL in the Devpost |
+
 ## The ladder
 
 Seven rungs, rendered live on the dashboard as the agent climbs:

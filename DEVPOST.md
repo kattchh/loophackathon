@@ -40,6 +40,22 @@ Everything streams to a projector-grade dashboard: giant live balance, the
 agent's thought feed, a purchase ledger, a seven-rung ladder rail, and a
 full-screen gift-card takeover at the end.
 
+## Sponsor tools used (3): Zero.xyz + Nexla + Akash
+
+- **Zero.xyz — the agent's hands.** Verified CLI install (`zero init` onto the
+  coding agent), verified $5 wallet claim (5.00 USDC via device-flow login),
+  and the full verb loop `search → get → fetch --capability --max-pay → review`
+  as the agent's only way to touch the economy.
+- **Nexla — the agent's books.** `ladder_agent.py` streams every thought,
+  purchase, and balance event into a Nexla webhook source created through the
+  Nexla agent CLI (with `--dry-run` validation first): source `125742` → flow
+  `634457` → auto-detected nexset `435614`. We also installed the Nexla Claude
+  Code skill onto the build agent via `nexla-cli skill install`.
+- **Akash — the agent's public mission control.** The dashboard runs as a
+  `node:20-alpine` Docker container on Akash's decentralized cloud (SDL in
+  `deploy/akash-deploy.yaml`, deployed via Console with the AKASHLOOP25
+  credits), publicly serving a perpetual replay of a real recorded run.
+
 ## How we built it (deep Zero.xyz usage — this is a Zero showcase)
 
 **The brain is Claude itself.** `ladder_agent.py` runs the Claude Agent SDK

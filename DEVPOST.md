@@ -53,8 +53,10 @@ full-screen gift-card takeover at the end.
   Code skill onto the build agent via `nexla-cli skill install`.
 - **Akash — the agent's public mission control.** The dashboard runs as a
   `node:20-alpine` Docker container on Akash's decentralized cloud (SDL in
-  `deploy/akash-deploy.yaml`, deployed via Console with the AKASHLOOP25
-  credits), publicly serving a perpetual replay of a real recorded run.
+  `deploy/akash-deploy.yaml`, deployed via Console; provider: digital
+  frontier, eu-se-1, $1.73/month, DSEQ 1784322581604), publicly serving a
+  perpetual replay of a real recorded run — **live now:**
+  http://ohorsvu8c59r19u6irvos216mg.ingress.h6i-dedicated.eu-se-1.digitalfrontier.so
 
 ## How we built it (deep Zero.xyz usage — this is a Zero showcase)
 

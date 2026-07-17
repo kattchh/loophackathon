@@ -26,7 +26,7 @@ whatever balance it earns its way to. Nobody wrote that arc. The market did.
 |---|---|---|
 | **Zero.xyz** | The agent's **hands** — discovers, inspects, pays, and reviews x402 services (`search → get → fetch → review`), $5 wallet claimed via device-flow CLI auth | CLI installed + `zero init`; 5.00 USDC claimed; run ledger |
 | **Nexla** | The agent's **books** — every thought and purchase streams from `ladder_agent.py` into a webhook source created with `nexla-cli` (dry-run-validated), schema auto-detected into a nexset | source `125742` → flow `634457` → nexset `435614`; `nexla-cli skill install` on the build agent |
-| **Akash** | The agent's **public mission control** — the dashboard, containerized (`node:20-alpine`) and self-hosted on the decentralized cloud, perpetually replaying a real recorded run | SDL at `deploy/akash-deploy.yaml`; public deployment URL in the Devpost |
+| **Akash** | The agent's **public mission control** — the dashboard, containerized (`node:20-alpine`) and self-hosted on the decentralized cloud, perpetually replaying a real recorded run | SDL at `deploy/akash-deploy.yaml` · [live deployment](http://ohorsvu8c59r19u6irvos216mg.ingress.h6i-dedicated.eu-se-1.digitalfrontier.so) (DSEQ 1784322581604) |
 
 ## The ladder
 

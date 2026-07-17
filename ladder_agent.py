@@ -185,7 +185,17 @@ async def market_search(args):
     q = str(args["query"])
     if LIVE:
         r = run_zero(["search", q, "--json"])
-        services = (r.get("data") or {}).get("services") or (r.get("data") or {}).get("results") or []
+        data = r.get("data") or {}
+        raw = data.get("capabilities") or data.get("services") or data.get("results") or []
+        # Normalize the real Zero shape (capabilities w/ cost.amount) into what the
+        # brain + guards expect ({token, name, price, ...}).
+        services = [{
+            "token": c.get("token") or c.get("uid") or c.get("id"),
+            "name": c.get("name") or c.get("canonicalName") or c.get("slug"),
+            "price": float((c.get("cost") or {}).get("amount") or c.get("price") or 0),
+            "rating": (c.get("rating") or {}).get("stars"),
+            "blurb": (c.get("whatItDoes") or c.get("description") or "")[:160],
+        } for c in raw]
     else:
         services = fixture_search(q)
     emit({"type": "search", "query": q, "results": len(services),

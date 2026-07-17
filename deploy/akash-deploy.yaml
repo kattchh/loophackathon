@@ -1,0 +1,59 @@
+# LADDER mission control on Akash Network (decentralized cloud)
+#
+# Deploys the dashboard as a public site that perpetually replays a REAL
+# recorded run of the Claude-brain agent (docs/sample-run.events.jsonl),
+# on its original pacing, looping forever.
+#
+# How: console.akash.network → Deploy → "Build your template" / upload SDL →
+# paste this file → pick a provider bid → done. Uses the stock node:20-alpine
+# image and pulls the three files straight from the public GitHub repo at
+# boot — no container registry needed.
+
+---
+version: "2.0"
+
+services:
+  ladder:
+    image: node:20-alpine
+    command:
+      - sh
+      - -c
+    args:
+      - |
+        set -e
+        mkdir -p /app/dashboard /app/docs
+        cd /app
+        BASE=https://raw.githubusercontent.com/kattchh/loophackathon/main
+        wget -qO dashboard/server.js  $BASE/dashboard/server.js
+        wget -qO dashboard/index.html $BASE/dashboard/index.html
+        wget -qO docs/sample-run.events.jsonl $BASE/docs/sample-run.events.jsonl
+        EVENTS_PATH=/app/docs/sample-run.events.jsonl REPLAY=1 PORT=4200 \
+          exec node dashboard/server.js
+    expose:
+      - port: 4200
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    ladder:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 512Mi
+  placement:
+    anywhere:
+      pricing:
+        ladder:
+          denom: uakt
+          amount: 10000
+
+deployment:
+  ladder:
+    anywhere:
+      profile: ladder
+      count: 1

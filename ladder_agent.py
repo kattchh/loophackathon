@@ -63,29 +63,37 @@ STATE = {"phase": "PLAN", "spent": 0.0, "wallet": WALLET_START_USD, "buys": 0}
 # Set NEXLA_WEBHOOK_URL to activate; without it this is completely dormant.
 # Fire-and-forget on a daemon thread — a slow pipeline can never stall the show.
 NEXLA_WEBHOOK_URL = os.environ.get("NEXLA_WEBHOOK_URL", "").strip()
+# When set, events POST to the dashboard's /ingest instead of a local file — lets the
+# brain run on a different host than the dashboard (deployed).
+EVENT_SINK_URL = os.environ.get("EVENT_SINK_URL", "").strip().rstrip("/")
+INGEST_TOKEN = os.environ.get("INGEST_TOKEN", "").strip()
 
 
-def _nexla_ship(event: dict) -> None:
+def _post(url: str, event: dict, headers: dict | None = None) -> None:
     try:
         req = urllib.request.Request(
-            NEXLA_WEBHOOK_URL,
+            url,
             data=json.dumps(event).encode(),
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", **(headers or {})},
             method="POST",
         )
         urllib.request.urlopen(req, timeout=3)
     except Exception:
-        pass  # telemetry is best-effort by design
+        pass  # best-effort by design — never stall the show
 
 
 def emit(event: dict) -> None:
-    """Append one event to events.jsonl — the dashboard tails this file."""
+    """Emit one event to the shared stream (local file, or the /ingest sink if set)."""
     event = {"ts": int(time.time() * 1000), **event}
-    with EVENTS_PATH.open("a") as f:
-        f.write(json.dumps(event) + "\n")
+    if EVENT_SINK_URL:
+        hdrs = {"x-ingest-token": INGEST_TOKEN} if INGEST_TOKEN else {}
+        threading.Thread(target=_post, args=(f"{EVENT_SINK_URL}/ingest", event, hdrs), daemon=True).start()
+    else:
+        with EVENTS_PATH.open("a") as f:
+            f.write(json.dumps(event) + "\n")
     print(json.dumps(event), flush=True)
     if NEXLA_WEBHOOK_URL:
-        threading.Thread(target=_nexla_ship, args=(event,), daemon=True).start()
+        threading.Thread(target=_post, args=(NEXLA_WEBHOOK_URL, event), daemon=True).start()
 
 
 def emit_balance() -> None:
@@ -300,6 +308,78 @@ async def narrate(args):
     return {"content": [{"type": "text", "text": '{"ok": true}'}]}
 
 
+# ---------------------------------------------------------------- the shop (earn side)
+# The agent doesn't just spend — it SELLS. These three tools drive a real x402
+# storefront (seller/server.mjs). A separate autonomous buyer pays it in real USDC
+# on Base. The brain lists a price, watches, and lowers it until the market clears —
+# real plan -> act -> observe -> self-correct, settled on-chain.
+
+SELLER_URL = os.environ.get("SELLER_URL", "http://localhost:4021").rstrip("/")
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "ladder-admin")
+
+
+def _seller_post(path: str, body: dict) -> dict:
+    req = urllib.request.Request(
+        f"{SELLER_URL}{path}",
+        data=json.dumps(body).encode(),
+        headers={"Content-Type": "application/json", "x-admin-secret": ADMIN_SECRET},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=5) as r:
+        return json.loads(r.read().decode())
+
+
+def _seller_get(path: str) -> dict:
+    with urllib.request.urlopen(f"{SELLER_URL}{path}", timeout=5) as r:
+        return json.loads(r.read().decode())
+
+
+@tool("open_shop",
+      "Open your x402 storefront: list the product you built, priced in USD. A real "
+      "autonomous buyer can pay it in USDC on Base. Lights rung 5. Free to list.",
+      {"product_name": str, "niche": str, "price_usd": float})
+async def open_shop(args):
+    name = str(args["product_name"])
+    price = float(args["price_usd"])
+    try:
+        r = _seller_post("/admin/list", {"product": {"name": name, "niche": str(args.get("niche") or "")}, "priceUsd": price})
+        emit({"type": "rung", "n": 5})
+        return {"content": [{"type": "text", "text": json.dumps({"ok": True, "listed": name, "priceUsd": r.get("priceUsd", price)})}]}
+    except Exception as e:
+        emit({"type": "thought", "text": f"Shop endpoint not reachable ({str(e)[:60]}). Is the seller service up?"})
+        return {"content": [{"type": "text", "text": json.dumps({"ok": False, "error": str(e)[:200]})}]}
+
+
+@tool("adjust_price",
+      "Reprice your shop (USD) when the market isn't clearing. This is your "
+      "self-correction lever — lower it and narrate why. Free.",
+      {"new_price_usd": float})
+async def adjust_price(args):
+    price = float(args["new_price_usd"])
+    try:
+        r = _seller_post("/admin/reprice", {"priceUsd": price})
+        return {"content": [{"type": "text", "text": json.dumps({"ok": True, "priceUsd": r.get("priceUsd", price)})}]}
+    except Exception as e:
+        return {"content": [{"type": "text", "text": json.dumps({"ok": False, "error": str(e)[:200]})}]}
+
+
+@tool("check_earnings",
+      "Check your shop for REAL sales. Optionally watch a few seconds first to give a "
+      "buyer time to act. Returns {count, receivedUsd}. Lights rung 6 on a real sale. Free.",
+      {"watch_seconds": int})
+async def check_earnings(args):
+    w = int(args.get("watch_seconds") or 0)
+    if w > 0:
+        await asyncio.sleep(min(w, 10))
+    try:
+        r = _seller_get("/earnings")
+        if r.get("count", 0) > 0:
+            emit({"type": "rung", "n": 6})
+        return {"content": [{"type": "text", "text": json.dumps(r)}]}
+    except Exception as e:
+        return {"content": [{"type": "text", "text": json.dumps({"ok": False, "count": 0, "error": str(e)[:200]})}]}
+
+
 # ---------------------------------------------------------------- the mission
 
 MISSION = f"""You are LADDER, an autonomous economic agent. You hold a REAL wallet:
@@ -323,9 +403,18 @@ RULES OF THE ROAD:
   means change strategy, not retry harder.
 - If a purchase fails, say so on stage and recover with the runner-up vendor.
 - Build a real product from what you buy (e.g. buy trend data -> pick a niche ->
-  buy 1-2 generated images -> assemble a "starter pack" -> buy page hosting to open
-  a shop for it, priced at a healthy margin over your input costs).
-- NEVER fake a sale. If nothing sold during the run, say the shop is open and waiting.
+  buy 1-2 generated images -> assemble a "starter pack", priced at a healthy margin
+  over your input costs).
+- THEN EARN, FOR REAL: open_shop(name, niche, price) lists that pack on your own x402
+  storefront. A real autonomous buyer is watching and will pay you in USDC on Base.
+  Price it ambitiously at first (you built something good).
+- OBSERVE + SELF-CORRECT: call check_earnings(watch_seconds=6) to watch for a sale.
+  If count is still 0, your price is above what the market will bear — call
+  adjust_price() to lower it, narrate WHY in one line, and check again. Repeat until
+  it clears. Letting the market set your price IS the point — do not force it.
+- When check_earnings shows count >= 1, that is real income (rung 6, VALUE CREATED):
+  narrate the amount of real USDC you just earned. NEVER fake a sale — only the tool
+  result counts. If the shop endpoint is unreachable, say so and move on to the finale.
 - Keep narrate thoughts <=140 chars, punchy, first person, present tense. ~2 per phase.
 - The gift card: search 'gift card', notice the cheap-search route (Bitrefill),
   find a variable-amount US Amazon card, buy about $2 of it in the FINALE phase.
@@ -344,7 +433,8 @@ async def main() -> None:
     server = create_sdk_mcp_server(
         name="ladder",
         version="1.0.0",
-        tools=[market_search, market_inspect, market_buy, market_review, narrate],
+        tools=[market_search, market_inspect, market_buy, market_review, narrate,
+               open_shop, adjust_price, check_earnings],
     )
     options = ClaudeAgentOptions(
         mcp_servers={"ladder": server},
@@ -354,6 +444,9 @@ async def main() -> None:
             "mcp__ladder__market_buy",
             "mcp__ladder__market_review",
             "mcp__ladder__narrate",
+            "mcp__ladder__open_shop",
+            "mcp__ladder__adjust_price",
+            "mcp__ladder__check_earnings",
         ],
         system_prompt="You are LADDER. Use ONLY the ladder tools. Think briefly, act decisively.",
         permission_mode="bypassPermissions",

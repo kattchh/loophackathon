@@ -20,13 +20,14 @@ spend fractions of cents on inputs, create value, and find a card with a
 flexible denomination (Bitrefill sells variable-amount cards) that fits
 whatever balance it earns its way to. Nobody wrote that arc. The market did.
 
-## Sponsor stack — three tools, three visibly different jobs
+## Sponsor stack — a two-sided economy: it **spends** and it **earns**
 
 | Sponsor | Role | Proof |
 |---|---|---|
-| **Zero.xyz** | The agent's **hands** — discovers, inspects, pays, and reviews x402 services (`search → get → fetch → review`), $5 wallet claimed via device-flow CLI auth | CLI installed + `zero init`; 5.00 USDC claimed; run ledger |
-| **Nexla** | The agent's **books** — every thought and purchase streams from `ladder_agent.py` into a webhook source created with `nexla-cli` (dry-run-validated), schema auto-detected into a nexset | source `125742` → flow `634457` → nexset `435614`; `nexla-cli skill install` on the build agent |
-| **Akash** | The agent's **public mission control** — the dashboard, containerized (`node:20-alpine`) and self-hosted on the decentralized cloud, perpetually replaying a real recorded run | SDL at `deploy/akash-deploy.yaml` · [live deployment](http://ohorsvu8c59r19u6irvos216mg.ingress.h6i-dedicated.eu-se-1.digitalfrontier.so) (DSEQ 1784322581604) |
+| **Zero.xyz** | The agent's **hands (spend side)** — discovers, inspects, pays, and reviews x402 services (`search → get → fetch → review`), $5 wallet claimed via device-flow CLI auth | CLI installed + `zero init`; 5.00 USDC claimed; run ledger |
+| **Nexla** | The agent's **books** — every thought, purchase, listing, and sale streams into a webhook source created with `nexla-cli` (dry-run-validated), auto-detected into a nexset | source `125742` → flow `634457` → nexset `435614`; `nexla-cli skill install` |
+| **Akash** | **Console** hosts the public mission-control dashboard, *and* **AkashML** runs the autonomous buyer's reasoning brain (`Llama-3.3-70B`) | dashboard SDL `deploy/akash-deploy.yaml` · [live](http://ohorsvu8c59r19u6irvos216mg.ingress.h6i-dedicated.eu-se-1.digitalfrontier.so) (DSEQ 1784322581604) · shop SDL `deploy/akash-seller.yaml` |
+| **x402 / Base** | The **earn side** — the agent runs its own x402 shop (`seller/`) and an autonomous buyer (`buyer/`) that settle real USDC on Base, each sale a BaseScan tx | `x402-express` + `x402-fetch` + viem; see `docs/EARN.md` |
 
 ## The ladder
 
@@ -94,6 +95,14 @@ npm i -g @anthropic-ai/claude-code   # the SDK's engine; sign in once with `clau
 
 # understudy — deterministic 90-second arc, no SDK needed (stage fallback)
 node agent/run.js
+
+# --- the EARN side (real x402 income on Base) ---
+npm install                        # earn-side deps (x402, viem, express, openai)
+node scripts/gen-wallets.mjs       # once — makes SELLER + BUYER wallets in ~/.ladder-env
+# fund the printed BUYER address (testnet: faucet.circle.com → Base Sepolia)
+set -a; source ~/.ladder-env; set +a
+./run-loop.sh                      # full show: dashboard + shop + autonomous buyer + brain
+./earn/demo.sh                     # or just the earn loop: shop marks down → buyer reasons → pays → tx
 ```
 
 Open http://localhost:4200 and watch the climb: all 7 rungs, ending in the
@@ -159,9 +168,11 @@ and we'd rather show honest engineering than burn the budget for theater.
   reconnaissance. Dry mode never spawns the `zero` binary and makes zero
   network calls.
 - Balance changes are simulated arithmetic against the same real prices.
-- The storefront sales in the SELL/OBSERVE beats are narrative: Zero agents
-  can only *spend*, so the earn side of the loop is our own x402 storefront
-  concept, simulated in dry runs.
+- The storefront sales are **no longer simulated** — the earn side is a real
+  x402 shop + autonomous buyer settling USDC on Base (see `docs/EARN.md`). It
+  runs on Base Sepolia testnet by default (free test USDC, so we can show the
+  whole loop honestly) and flips to real USDC on mainnet with one config value.
+  A sale is only ever recorded from a settled on-chain payment — never faked.
 - The gift-card code shown at the finale is a masked placeholder. In LIVE
   mode the finale purchase is real and the code is masked because it's real.
 

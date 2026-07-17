@@ -44,6 +44,13 @@ Dashboard polls/tails it. Fields: `ts` = Date.now() ms. Types:
 {"ts":0,"type":"artifact","kind":"image|page|report|giftcard","label":"Product hero image","url":"...","path":"..."}
 {"ts":0,"type":"rung","n":2}                                // ladder rung reached, 1..7
 {"ts":0,"type":"finale","brand":"Amazon","amountUsd":2.0,"codeMasked":"AQ3X-••••-••••"}
+
+// --- EARN side (additive, from seller/server.mjs + buyer/agent.mjs). Old dashboards
+//     ignore unknown types; the current dashboard renders them in the EARN panel. ---
+{"ts":0,"type":"listing","product":"Regal Paws Starter Pack","priceUsd":0.5,"url":"http://localhost:4021/shop","note":"repriced"}
+{"ts":0,"type":"offer","willingnessUsd":0.12,"priceUsd":0.5,"decision":"skip","model":"meta-llama/Llama-3.3-70B-Instruct"}
+{"ts":0,"type":"sale","product":"Regal Paws Starter Pack","amountUsd":0.11,"buyer":"0x…","network":"base-sepolia","txHash":"0x…","explorerUrl":"https://sepolia.basescan.org/tx/0x…"}
+{"ts":0,"type":"earnings","totalUsd":0.11}                  // USDC actually received by the shop wallet
 ```
 
 Ladder rungs (dashboard renders this rail): 1 📎 wallet live · 2 🔍 market scouted ·

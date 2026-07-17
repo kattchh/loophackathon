@@ -1,0 +1,73 @@
+# LADDER shop (x402 seller) on Akash Network — a REAL, PUBLIC pay-per-use endpoint.
+#
+# Deploys seller/server.mjs so anyone (or any agent) can hit POST /buy, get a 402,
+# pay USDC on Base, and receive the product — real income to the SELLER wallet.
+#
+# Deploy: console.akash.network → Deploy → upload SDL → paste this → pick a bid.
+# Stock node:20-alpine, installs the x402 deps + pulls code from GitHub at boot
+# (no registry). After the first deploy you'll get an ingress URL like
+#   http://<hash>.ingress.<provider>...
+# Set that as SHOP_PUBLIC_URL in the Console env and redeploy so listings advertise it.
+#
+# SECRETS: never put keys in this file (the SDL is public). Set SELLER_ADDRESS,
+# ADMIN_SECRET, EVENT_SINK_URL, NEXLA_WEBHOOK_URL — and for mainnet CDP_API_KEY_ID /
+# CDP_API_KEY_SECRET — in the Console "Environment Variables" panel at deploy time.
+
+---
+version: "2.0"
+
+services:
+  shop:
+    image: node:20-alpine
+    env:
+      # Non-secret defaults; override the rest in the Console env panel.
+      - LADDER_NET=testnet
+      # - SHOP_PUBLIC_URL=http://<your-ingress-host>   # set after first deploy
+      # - SELLER_ADDRESS=0x...        (set in Console)
+      # - ADMIN_SECRET=...            (set in Console)
+      # - EVENT_SINK_URL=https://<live-dashboard>/ingest   (optional)
+      # - NEXLA_WEBHOOK_URL=...       (optional)
+      # - CDP_API_KEY_ID=... / CDP_API_KEY_SECRET=...   (mainnet only)
+    command:
+      - sh
+      - -c
+    args:
+      - |
+        set -e
+        mkdir -p /app/seller /app/lib
+        cd /app
+        BASE=https://raw.githubusercontent.com/kattchh/loophackathon/main
+        wget -qO seller/server.mjs $BASE/seller/server.mjs
+        wget -qO lib/net.mjs       $BASE/lib/net.mjs
+        wget -qO lib/events.mjs    $BASE/lib/events.mjs
+        npm init -y >/dev/null 2>&1
+        npm i --no-audit --no-fund x402-express@1.2.0 @coinbase/x402@1.0.1 viem express >/dev/null 2>&1
+        SELLER_PORT=4021 exec node seller/server.mjs
+    expose:
+      - port: 4021
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    shop:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 512Mi
+  placement:
+    anywhere:
+      pricing:
+        shop:
+          denom: uakt
+          amount: 10000
+
+deployment:
+  shop:
+    anywhere:
+      profile: shop
+      count: 1

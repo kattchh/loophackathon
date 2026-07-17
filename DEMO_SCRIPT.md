@@ -6,8 +6,9 @@ anchor each beat on what APPEARS (a rung lighting, a purchase landing), not on
 the clock. The script survives ±20 seconds of drift. Talk to the ledger, never
 to the spinner.
 
-**The two money moments to milk:** (1) the balance visibly dropping on the
-first purchase, (2) the full-screen gift card at the finale. Everything else
+**The three money moments to milk:** (1) the balance visibly dropping on the
+first purchase, (2) a **real on-chain sale** — the agent gets *paid*, tx hash
+on the EARN panel, (3) the full-screen gift card at the finale. Everything else
 is connective tissue. When a money moment lands: stop walking, point, pause a
 full beat before speaking.
 
@@ -15,16 +16,21 @@ full beat before speaking.
 
 - Dashboard fullscreen at http://localhost:4200, projector-dark room if we can get it.
 - Fresh `events.jsonl` (delete it) so the screen opens clean: $5.00, ladder dark.
-- Tech side has `./.venv/bin/python ladder_agent.py` typed and ready — fires on
-  your cue at ~0:20. (Panic fallback: `node agent/run.js` — deterministic, 90s.)
+- `set -a; source ~/.ladder-env; set +a` first (loads wallet keys + AkashML +
+  Nexla), then tech side has `./run-loop.sh` ready — it starts the dashboard,
+  the x402 shop, the autonomous buyer, and the brain. Fires on your cue at
+  ~0:20. (Panic fallbacks: spend arc only `MODE=understudy ./run-loop.sh`;
+  earn segment only `./earn/demo.sh` — deterministic markdown → real sale.)
 - ONLY the dashboard on screen while recording — no email, no messages, no tabs.
 - Phone timer in your pocket on vibrate at 2:30.
 - One rule: **never apologize to the screen.** If anything stalls, use the 15-second fallback below.
 
 **What's true (say it with your chest):** the brain is Claude reasoning live —
-nothing on the left side of the screen is scripted. The market it shops is a
-replay of our real reconnaissance (real services, real prices, real $5 wallet,
-sealed on purpose). Every run comes out different.
+nothing on the left side of the screen is scripted. The market it *spends* in is
+a replay of our real reconnaissance (real services, real prices, real $5 wallet,
+sealed on purpose). But the *earn* side is real settlement — the sale is real
+USDC moving on Base with an on-chain tx hash (testnet in the demo, one flip from
+mainnet). Every run comes out different.
 
 ---
 
@@ -72,28 +78,43 @@ sealed on purpose). Every run comes out different.
 > 'Payment Required' and the agent just… paid. That is the entire funnel.
 > I've shipped a lot of checkout flows — this one hurts my feelings."
 
-### 1:25 — BUILD → SELL
-**On screen:** More thoughts + purchases (image gen ~$0.003). Artifact card appears. Rungs 3–4–5: *inputs bought → product built → shop open*.
+### 1:25 — BUILD → SELL (open the real shop)
+**On screen:** More thoughts + purchases (image gen ~$0.003). Artifact card appears. Rungs 3–4–5: *inputs bought → product built → shop open*. EARN panel: a `listing` appears.
 **Say:**
 > "With about a penny spent, it buys its ingredients — trend data, AI image
 > generation — and assembles an actual product." *(glance at the thought feed
 > and read its niche out loud, deadpan:)* "It has decided [read it — e.g. 'AI
 > pet portraits are hot']. I don't question the agent's product strategy. I
-> just fund it. And then — rung five — it opens its own shop: its own paywall
-> on the same machine economy, selling to other agents the exact same way it
-> buys."
+> just fund it. And then — rung five — it opens its own **real** shop: its own
+> x402 paywall on Base. Not a mockup. A live endpoint another agent can pay."
 
-### 1:45 — OBSERVE → CORRECT
-**On screen:** Balance ticks, review events, rung 6: *value created*. Thoughts about card denominations.
+### 1:40 — THE NEGOTIATION 🧠 (two agents thinking)
+**On screen:** EARN panel + thought feed: a **buyer** agent appears, reasons about price ("I'll pay up to $0.20 — …"), **holds off**; the seller **marks the price down**.
 **Say:**
-> "Now it reads its own books. And it leaves star ratings on every service it
-> paid — yes, the AI writes reviews, and yes, it's a harsh critic. Then the
-> correction, and this is the part I love: it re-checks the gift-card market
-> and finds cards with *flexible* amounts. It doesn't need the $5.24 card.
-> It sizes the ending to whatever it's actually got. That's not a script —
-> that's a shopper."
+> "Now watch both sides think. A second agent — a buyer, its brain running on
+> AkashML — reads the listing and decides what it's worth. It says the price is
+> too high, and *waits*. So our agent drops the price. Nobody told either of
+> them the right number — they're negotiating it, live, out loud."
 
-### 2:05 — FINALE: 🎁 MONEY MOMENT #2
+### 1:55 — 💸 MONEY MOMENT #2: the agent gets PAID
+**On screen:** EARN panel: a green `SALE` row with a **BaseScan tx link**. TOTAL EARNED ticks up. Rung 6: *value created*.
+**Do:** Stop. Point at the sale row and its `tx ↗`. Full beat.
+**Say:**
+> "There. It sold. That green line is real USDC that just moved on the Base
+> blockchain — and that link is the transaction, on-chain, receipts you can
+> click. Our agent didn't just spend money today. It *earned* some. Then it
+> reads its books and leaves star ratings on every service it paid — the AI
+> writes reviews, and it's a harsh critic."
+
+### 2:00 — CORRECT (size the ending)
+**On screen:** Thoughts about card denominations; balance settled.
+**Say:**
+> "Last correction, and this is the part I love: it re-checks the gift-card
+> market and finds cards with *flexible* amounts. It doesn't need the $5.24
+> card. It sizes its ending to whatever it's actually got. That's not a
+> script — that's a shopper."
+
+### 2:20 — FINALE: 🎁 MONEY MOMENT #3
 **On screen:** Full-screen gift-card takeover. **Amazon**, amount, masked code (e.g. `AQ3X-••••-••••`). Rung 7: *CASHED OUT*.
 **Do:** Step aside so the whole screen is visible. Let it breathe for two full seconds before speaking.
 **Say:**
@@ -137,13 +158,15 @@ the CLOSE — the ladder line works over a frozen ledger, and the ledger is real
 
 ## Timing cheat card (tape to the podium)
 
-| Clock | Beat            | You are pointing at            |
-|-------|-----------------|--------------------------------|
-| 0:00  | Cold open       | the $5.00                      |
-| 0:20  | PLAN (cue run)  | thought feed                   |
-| 0:40  | The plot twist  | "22 services" / $5.24          |
-| 1:05  | MONEY #1        | the balance dropping           |
-| 1:25  | BUILD → SELL    | artifact + rung rail           |
-| 1:45  | OBSERVE→CORRECT | reviews, flexible denominations|
-| 2:05  | MONEY #2        | the gift card (step aside)     |
-| 2:35  | Close           | the full ladder                |
+| Clock | Beat             | You are pointing at            |
+|-------|------------------|--------------------------------|
+| 0:00  | Cold open        | the $5.00                      |
+| 0:20  | PLAN (cue run)   | thought feed                   |
+| 0:40  | The plot twist   | "22 services" / $5.24          |
+| 1:05  | MONEY #1 (spend) | the balance dropping           |
+| 1:25  | BUILD → open shop| artifact + rung 5 + EARN panel |
+| 1:40  | The negotiation  | buyer reasoning · price markdown|
+| 1:55  | MONEY #2 (earn)  | the SALE row + `tx ↗` link     |
+| 2:00  | CORRECT          | flexible denominations         |
+| 2:20  | MONEY #3 (card)  | the gift card (step aside)     |
+| 2:40  | Close            | the full ladder                |

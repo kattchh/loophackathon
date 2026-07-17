@@ -1,0 +1,20 @@
+{
+  "name": "ladder-earn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LADDER earn side — a real x402 seller endpoint + autonomous buyer settling USDC on Base. The dashboard (dashboard/) and understudy (agent/) stay zero-dependency; these deps are only for the earn loop.",
+  "type": "commonjs",
+  "scripts": {
+    "seller": "node seller/server.mjs",
+    "buyer": "node buyer/agent.mjs",
+    "wallets": "node scripts/gen-wallets.mjs"
+  },
+  "dependencies": {
+    "@coinbase/x402": "1.0.1",
+    "express": "^4.21.2",
+    "openai": "^4.77.0",
+    "viem": "^2.21.55",
+    "x402-express": "1.2.0",
+    "x402-fetch": "1.2.0"
+  }
+}

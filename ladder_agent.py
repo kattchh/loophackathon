@@ -27,6 +27,7 @@ Env knobs: BUDGET_USD (default 0.60) working budget outside the finale.
 import asyncio
 import json
 import os
+import re
 import subprocess
 import threading
 import time
@@ -96,7 +97,25 @@ def emit(event: dict) -> None:
         threading.Thread(target=_post, args=(NEXLA_WEBHOOK_URL, event), daemon=True).start()
 
 
+def real_balance_usd():
+    """The REAL wallet balance from the Zero CLI (Base + Tempo), LIVE only. None if unavailable."""
+    if not LIVE:
+        return None
+    try:
+        proc = subprocess.run(["zero", "wallet", "balance"], capture_output=True, text=True, timeout=20)
+        m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*USDC", proc.stdout)
+        return float(m.group(1)) if m else None
+    except Exception:
+        return None
+
+
 def emit_balance() -> None:
+    # LIVE: the number on the dashboard IS the real on-chain wallet (Base + Tempo),
+    # queried from Zero — not a tracked counter. DRY: the simulated STATE wallet.
+    if LIVE:
+        rb = real_balance_usd()
+        if rb is not None:
+            STATE["wallet"] = rb
     emit({"type": "balance", "usd": round(STATE["wallet"], 4)})
 
 
